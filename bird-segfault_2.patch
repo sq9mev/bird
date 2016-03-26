@@ -1,0 +1,93 @@
+diff --git a/lib/lists.c b/lib/lists.c
+index d323a4b..20a9a07 100644
+--- a/lib/lists.c
++++ b/lib/lists.c
+@@ -88,7 +88,7 @@ insert_node(node *n, node *after)
+  * rem_node - remove a node from a list
+  * @n: node to be removed
+  *
+- * Removes a node @n from the list it's linked in.
++ * Removes a node @n from the list it's linked in. Afterwards, node @n is cleared.
+  */
+ LIST_INLINE void
+ rem_node(node *n)
+@@ -98,23 +98,6 @@ rem_node(node *n)
+ 
+   z->next = x;
+   x->prev = z;
+-}
+-
+-/**
+- * rem2_node - remove a node from a list, with cleanup
+- * @n: node to be removed
+- *
+- * Removes a node @n from the list it's linked in and resets its pointers to NULL.
+- * Useful if you want to distinguish between linked and unlinked nodes.
+- */
+-LIST_INLINE void
+-rem2_node(node *n)
+-{
+-  node *z = n->prev;
+-  node *x = n->next;
+-
+-  z->next = x;
+-  x->prev = z;
+   n->next = NULL;
+   n->prev = NULL;
+ }
+diff --git a/lib/lists.h b/lib/lists.h
+index 80a4dc9..4204cbc 100644
+--- a/lib/lists.h
++++ b/lib/lists.h
+@@ -61,7 +61,6 @@ typedef struct list {			/* In fact two overlayed nodes */
+ void add_tail(list *, node *);
+ void add_head(list *, node *);
+ void rem_node(node *);
+-void rem2_node(node *);
+ void add_tail_list(list *, list *);
+ void init_list(list *);
+ void insert_node(node *, node *);
+diff --git a/lib/resource.c b/lib/resource.c
+index 64f9a39..68718df 100644
+--- a/lib/resource.c
++++ b/lib/resource.c
+@@ -163,6 +163,7 @@ rfree(void *res)
+   if (r->n.next)
+     rem_node(&r->n);
+   r->class->free(r);
++  r->class = NULL;
+   xfree(r);
+ }
+ 
+@@ -383,16 +384,9 @@ mb_allocz(pool *p, unsigned size)
+ void *
+ mb_realloc(void *m, unsigned size)
+ {
+-  struct mblock *ob = NULL;
+-
+-  if (m)
+-    {
+-      ob = SKIP_BACK(struct mblock, data, m);
+-      if (ob->r.n.next)
+-	rem_node(&ob->r.n);
+-    }
++  struct mblock *b = SKIP_BACK(struct mblock, data, m);
+ 
+-  struct mblock *b = xrealloc(ob, sizeof(struct mblock) + size);
++  b = xrealloc(b, sizeof(struct mblock) + size);
+   replace_node(&b->r.n, &b->r.n);
+   b->size = size;
+   return b->data;
+diff --git a/proto/bfd/bfd.c b/proto/bfd/bfd.c
+index 7a08579..5de2f55 100644
+--- a/proto/bfd/bfd.c
++++ b/proto/bfd/bfd.c
+@@ -872,7 +872,7 @@ bfd_notify_hook(sock *sk, int len)
+   WALK_LIST_FIRST(s, tmp_list)
+   {
+     bfd_lock_sessions(p);
+-    rem2_node(&s->n);
++    rem_node(&s->n);
+     state = s->loc_state;
+     diag = s->loc_diag;
+     bfd_unlock_sessions(p);

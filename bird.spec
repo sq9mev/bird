@@ -10,7 +10,7 @@ Summary:	The BIRD Internet Routing Daemon
 Summary(pl.UTF-8):	Demon BIRD Internetowego Routingu Dynamicznego
 Name:		bird
 Version:	1.5.0
-Release:	2
+Release:	3
 License:	GPL v2+
 Group:		Networking/Daemons
 Source0:	ftp://bird.network.cz/pub/bird/%{name}-%{version}.tar.gz
@@ -24,6 +24,8 @@ Source5:	ftp://bird.network.cz/pub/bird/%{name}-doc-%{version}.tar.gz
 Source6:	%{name}-ipv4.service
 Source7:	%{name}-ipv6.service
 Patch0:		%{name}-allowalien.patch
+Patch1:		%{name}-segfault_1.patch
+Patch2:		%{name}-segfault_2.patch
 URL:		http://bird.network.cz/
 BuildRequires:	autoconf
 BuildRequires:	automake
@@ -109,12 +111,14 @@ filtrów o dużych możliwościach.
 %prep
 %setup -q -a 5
 %{?with_alien:%patch0 -p1}
+%patch1 -p1
+%patch2 -p1
 
 %build
 cp -f /usr/share/automake/config.* tools
 %{__autoconf}
 
-export CFLAGS="%{rpmcflags} -I%{_includedir}/ncursesw -fno-strict-aliasing -fno-strict-overflow"
+export CFLAGS="%{rpmcflags} -I%{_includedir}/ncursesw"
 
 %if %{with ipv6}
 %configure \
