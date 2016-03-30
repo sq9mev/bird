@@ -43,6 +43,7 @@ Obsoletes:	mrt
 Obsoletes:	zebra
 Obsoletes:	zebra-guile
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
+%define filterout -fwrapv
 
 %description
 The BIRD project is an attempt to create a routing daemon running on
